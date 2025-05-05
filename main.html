@@ -5,28 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Journey Together | Plan Group Travel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#121212', // Darker background
+                            200: '#1e1e1e', // Card backgrounds
+                            300: '#2d2d2d', // Hover states
+                            400: '#3d3d3d', // Borders
+                            500: '#666666', // Secondary text
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f8fafc;
             min-height: 100vh;
             margin: 0;
             padding: 0;
-            color: #1e293b;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         #map {
             height: 400px;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: filter 0.3s;
         }
 
         .journey-card {
             transition: all 0.3s ease;
             border-left: 4px solid transparent;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .journey-card:hover {
@@ -37,12 +72,9 @@
 
         .active-journey {
             border-left-color: #3b82f6;
-            background-color: #eff6ff;
         }
 
         .invite-chip {
-            background-color: #e0f2fe;
-            color: #0369a1;
             transition: all 0.2s;
         }
 
@@ -70,37 +102,180 @@
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
+            transition: opacity 0.3s;
         }
 
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .modal-content {
+            transform: translateY(20px);
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .modal-open .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Dark mode specific styles */
+        .dark {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .dark .journey-card {
+            background-color: #1e1e1e;
+            border-color: #3d3d3d;
+            color: #ffffff;
+        }
+
+        .dark .journey-card:hover {
+            background-color: #2d2d2d;
+        }
+
+        .dark .active-journey {
+            background-color: #1a3a5e;
+        }
+
+        .dark .invite-chip {
+            background-color: #1e3a8a;
+            color: #bfdbfe;
+        }
+
+        .dark .invite-chip:hover {
+            background-color: #1e40af;
+        }
+
+        .dark #map {
+            filter: brightness(0.8) contrast(1.2);
+        }
+
+        /* Dark mode toggle switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3b82f6;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .slider .icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+
+        .slider .moon {
+            left: 8px;
+            color: #1e293b;
+        }
+
+        .slider .sun {
+            right: 8px;
+            color: #f59e0b;
+        }
+
+        /* Guest mode styles */
+        .guest-badge {
+            animation: pulse-slow 2s infinite;
+        }
+
+        /* Loading animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Floating animation for welcome illustration */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 dark:bg-dark-100 text-gray-800 dark:text-gray-200">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm">
+    <nav class="bg-white dark:bg-dark-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 flex items-center">
                         <i class="fas fa-route text-blue-500 text-2xl mr-2"></i>
-                        <span class="text-xl font-semibold text-gray-900">Journey Together</span>
+                        <span class="text-xl font-semibold">Journey Together</span>
                     </div>
                 </div>
-                <div class="flex items-center">
-                    <button id="create-journey-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
-                        <i class="fas fa-plus mr-2"></i> New Journey
-                    </button>
-                    <div class="ml-4 relative">
-                        <button id="user-menu-btn" class="flex items-center text-sm rounded-full focus:outline-none">
-                            <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User profile">
+                <div class="flex items-center space-x-4">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="dark-mode-toggle">
+                        <span class="slider">
+                            <i class="fas fa-moon icon moon"></i>
+                            <i class="fas fa-sun icon sun"></i>
+                        </span>
+                    </label>
+                    <div id="auth-buttons" class="hidden">
+                        <button id="login-btn" class="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-300">Log In</button>
+                        <button id="register-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Register</button>
+                    </div>
+                    <div id="user-menu" class="hidden">
+                        <button id="create-journey-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i class="fas fa-plus mr-2"></i> New Journey
                         </button>
+                        <div class="ml-4 relative">
+                            <button id="user-menu-btn" class="flex items-center text-sm rounded-full focus:outline-none">
+                                <img class="h-8 w-8 rounded-full" id="user-avatar" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User profile">
+                                <span id="guest-badge" class="guest-badge hidden absolute -top-1 -right-1 bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full">Guest</span>
+                            </button>
+                            <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-dark-200 rounded-md shadow-lg py-1 z-50">
+                                <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark-300">Profile</a>
+                                <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark-300">Settings</a>
+                                <a href="#" id="logout-btn" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark-300">Log Out</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -112,66 +287,32 @@
         <div class="flex flex-col md:flex-row gap-8">
             <!-- Sidebar -->
             <div class="w-full md:w-1/3 lg:w-1/4 space-y-4">
-                <div class="bg-white p-4 rounded-lg shadow-sm">
-                    <h2 class="text-lg font-semibold mb-4">Your Journeys</h2>
+                <div class="bg-white dark:bg-dark-200 p-4 rounded-lg shadow-sm animate-slide-up">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Your Journeys</h2>
+                        <button id="view-public-btn" class="text-sm text-blue-500 hover:underline">Browse Public</button>
+                    </div>
                     <div class="space-y-3" id="journeys-list">
                         <!-- Journey cards will be added here dynamically -->
-                        <div class="journey-card active-journey bg-white p-3 rounded-lg border cursor-pointer">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-medium">European Adventure</h3>
-                                    <p class="text-sm text-gray-500">Jun 15 - Jul 5, 2023</p>
-                                </div>
-                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Active</span>
-                            </div>
-                            <div class="mt-2 flex items-center text-sm text-gray-500">
-                                <i class="fas fa-users mr-1"></i>
-                                <span>4 travelers</span>
-                            </div>
-                        </div>
-                        <div class="journey-card bg-white p-3 rounded-lg border cursor-pointer">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-medium">Asian Expedition</h3>
-                                    <p class="text-sm text-gray-500">Planned for Nov 2023</p>
-                                </div>
-                                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Planning</span>
-                            </div>
-                            <div class="mt-2 flex items-center text-sm text-gray-500">
-                                <i class="fas fa-users mr-1"></i>
-                                <span>2 travelers</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-lg shadow-sm">
+                <div class="bg-white dark:bg-dark-200 p-4 rounded-lg shadow-sm hidden animate-slide-up" id="public-journeys-container">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Public Journeys</h2>
+                        <button id="view-your-btn" class="text-sm text-blue-500 hover:underline">View Yours</button>
+                    </div>
+                    <div class="space-y-3" id="public-journeys-list">
+                        <!-- Public journey cards will be added here dynamically -->
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-dark-200 p-4 rounded-lg shadow-sm animate-slide-up" id="companions-container">
                     <h2 class="text-lg font-semibold mb-4">Travel Companions</h2>
                     <div class="space-y-3" id="companions-list">
                         <!-- Companion cards will be added here dynamically -->
-                        <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah">
-                            <div class="ml-3">
-                                <p class="text-sm font-medium">Sarah Johnson</p>
-                                <p class="text-xs text-gray-500">Confirmed</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Mike">
-                            <div class="ml-3">
-                                <p class="text-sm font-medium">Mike Chen</p>
-                                <p class="text-xs text-gray-500">Confirmed</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Emma">
-                            <div class="ml-3">
-                                <p class="text-sm font-medium">Emma Rodriguez</p>
-                                <p class="text-xs text-gray-500">Pending</p>
-                            </div>
-                        </div>
                     </div>
-                    <button id="invite-btn" class="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg flex items-center justify-center">
+                    <button id="invite-btn" class="mt-4 w-full bg-gray-100 dark:bg-dark-300 hover:bg-gray-200 dark:hover:bg-dark-400 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg flex items-center justify-center">
                         <i class="fas fa-user-plus mr-2"></i> Invite Friends
                     </button>
                 </div>
@@ -179,153 +320,179 @@
 
             <!-- Main Content Area -->
             <div class="w-full md:w-2/3 lg:w-3/4 space-y-6">
-                <div class="bg-white p-4 rounded-lg shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold">European Adventure</h2>
-                        <div class="flex space-x-2">
-                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 p-2 rounded-lg">
-                                <i class="fas fa-route"></i>
-                            </button>
-                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 p-2 rounded-lg">
-                                <i class="fas fa-map-marked-alt"></i>
-                            </button>
-                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 p-2 rounded-lg">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
-                        </div>
+                <div id="welcome-message" class="bg-white dark:bg-dark-200 p-8 rounded-lg shadow-sm text-center animate-fade-in">
+                    <div class="floating mb-6">
+                        <svg width="200" height="200" viewBox="0 0 200 200" class="mx-auto">
+                            <circle cx="100" cy="100" r="80" fill="#3b82f6" opacity="0.1"/>
+                            <path d="M100,30 L120,80 L170,80 L130,110 L150,160 L100,130 L50,160 L70,110 L30,80 L80,80 Z" fill="#3b82f6"/>
+                            <circle cx="100" cy="100" r="40" fill="#3b82f6" opacity="0.2"/>
+                        </svg>
                     </div>
-                    
-                    <!-- Map Container -->
-                    <div id="map" class="mb-4"></div>
-                    
-                    <div class="flex justify-between items-center">
-                        <div class="flex space-x-2">
-                            <button id="add-stop-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center text-sm">
-                                <i class="fas fa-plus mr-1"></i> Add Stop
-                            </button>
-                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-lg flex items-center text-sm">
-                                <i class="fas fa-share-alt mr-1"></i> Share
-                            </button>
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            Last updated: 2 hours ago
-                        </div>
+                    <h2 class="text-2xl font-bold mb-2">Plan Your Next Adventure</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">Create journeys, invite friends, and explore the world together</p>
+                    <div class="flex justify-center space-x-4">
+                        <button id="welcome-login-btn" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transform hover:scale-105 transition-transform">Log In</button>
+                        <button id="welcome-register-btn" class="px-6 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-dark-300 transform hover:scale-105 transition-transform">Register</button>
+                        <button id="guest-login-btn" class="px-6 py-2 bg-gray-100 dark:bg-dark-300 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-400 transform hover:scale-105 transition-transform">Continue as Guest</button>
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-lg shadow-sm">
-                    <h2 class="text-lg font-semibold mb-4">Journey Details</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="border rounded-lg p-4">
-                            <h3 class="font-medium text-gray-700 mb-2">Itinerary</h3>
-                            <div class="space-y-3">
-                                <div class="flex items-start">
-                                    <div class="bg-blue-100 text-blue-800 rounded-full h-6 w-6 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
-                                        <i class="fas fa-plane-departure text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium">Paris, France</p>
-                                        <p class="text-xs text-gray-500">Jun 15 - Jun 18</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="bg-blue-100 text-blue-800 rounded-full h-6 w-6 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
-                                        <i class="fas fa-train text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium">Brussels, Belgium</p>
-                                        <p class="text-xs text-gray-500">Jun 18 - Jun 20</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="bg-blue-100 text-blue-800 rounded-full h-6 w-6 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
-                                        <i class="fas fa-bus text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium">Amsterdam, Netherlands</p>
-                                        <p class="text-xs text-gray-500">Jun 20 - Jun 25</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="bg-blue-100 text-blue-800 rounded-full h-6 w-6 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
-                                        <i class="fas fa-ship text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium">Berlin, Germany</p>
-                                        <p class="text-xs text-gray-500">Jun 25 - Jul 5</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="border rounded-lg p-4">
-                            <h3 class="font-medium text-gray-700 mb-2">Budget</h3>
-                            <div class="space-y-2">
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span>Accommodation</span>
-                                        <span>$1,200</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                        <div class="bg-blue-600 h-1.5 rounded-full" style="width: 60%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span>Transport</span>
-                                        <span>$800</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                        <div class="bg-green-500 h-1.5 rounded-full" style="width: 40%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span>Food</span>
-                                        <span>$600</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                        <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 30%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4 pt-2 border-t">
-                                <div class="flex justify-between font-medium">
-                                    <span>Total</span>
-                                    <span>$2,600</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="border rounded-lg p-4">
-                            <h3 class="font-medium text-gray-700 mb-2">Group Chat</h3>
-                            <div class="h-40 overflow-y-auto mb-3 space-y-2">
-                                <div class="flex">
-                                    <img class="h-6 w-6 rounded-full mr-2" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah">
-                                    <div class="bg-gray-100 rounded-lg p-2 text-sm max-w-xs">
-                                        <p class="font-medium">Sarah</p>
-                                        <p>Has everyone booked their flights yet?</p>
-                                    </div>
-                                </div>
-                                <div class="flex justify-end">
-                                    <div class="bg-blue-100 rounded-lg p-2 text-sm max-w-xs">
-                                        <p>Yes, I booked mine yesterday</p>
-                                    </div>
-                                </div>
-                                <div class="flex">
-                                    <img class="h-6 w-6 rounded-full mr-2" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Mike">
-                                    <div class="bg-gray-100 rounded-lg p-2 text-sm max-w-xs">
-                                        <p class="font-medium">Mike</p>
-                                        <p>I found a great hostel in Amsterdam</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex">
-                                <input type="text" placeholder="Type a message..." class="flex-1 border rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 rounded-r-lg">
-                                    <i class="fas fa-paper-plane"></i>
+                <div id="journey-content" class="hidden">
+                    <div class="bg-white dark:bg-dark-200 p-4 rounded-lg shadow-sm animate-fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold" id="journey-title">European Adventure</h2>
+                            <div class="flex space-x-2">
+                                <button id="privacy-toggle" class="flex items-center text-sm bg-gray-100 dark:bg-dark-300 hover:bg-gray-200 dark:hover:bg-dark-400 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg">
+                                    <i class="fas fa-lock mr-1" id="privacy-icon"></i>
+                                    <span id="privacy-text">Private</span>
+                                </button>
+                                <button class="bg-gray-100 dark:bg-dark-300 hover:bg-gray-200 dark:hover:bg-dark-400 text-gray-800 dark:text-gray-200 p-2 rounded-lg">
+                                    <i class="fas fa-route"></i>
+                                </button>
+                                <button class="bg-gray-100 dark:bg-dark-300 hover:bg-gray-200 dark:hover:bg-dark-400 text-gray-800 dark:text-gray-200 p-2 rounded-lg">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                </button>
+                                <button class="bg-gray-100 dark:bg-dark-300 hover:bg-gray-200 dark:hover:bg-dark-400 text-gray-800 dark:text-gray-200 p-2 rounded-lg">
+                                    <i class="fas fa-ellipsis-h"></i>
                                 </button>
                             </div>
                         </div>
+                        
+                        <!-- Map Container -->
+                        <div id="map" class="mb-4"></div>
+                        
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-2">
+                                <button id="add-stop-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center text-sm transform hover:scale-105 transition-transform">
+                                    <i class="fas fa-plus mr-1"></i> Add Stop
+                                </button>
+                                <button id="share-journey-btn" class="bg-gray-100 dark:bg-dark-300 hover:bg-gray-200 dark:hover:bg-dark-400 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg flex items-center text-sm transform hover:scale-105 transition-transform">
+                                    <i class="fas fa-share-alt mr-1"></i> Share
+                                </button>
+                            </div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                Last updated: <span id="last-updated">2 hours ago</span>
+                            </div>
+                        </div>
                     </div>
+
+                    <div class="bg-white dark:bg-dark-200 p-4 rounded-lg shadow-sm animate-fade-in">
+                        <h2 class="text-lg font-semibold mb-4">Journey Details</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="border dark:border-dark-300 rounded-lg p-4">
+                                <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Itinerary</h3>
+                                <div class="space-y-3" id="itinerary-list">
+                                    <!-- Itinerary items will be added here dynamically -->
+                                </div>
+                            </div>
+                            <div class="border dark:border-dark-300 rounded-lg p-4">
+                                <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Budget</h3>
+                                <div class="space-y-2" id="budget-list">
+                                    <!-- Budget items will be added here dynamically -->
+                                </div>
+                                <div class="mt-4 pt-2 border-t dark:border-dark-300">
+                                    <div class="flex justify-between font-medium">
+                                        <span>Total</span>
+                                        <span id="total-budget">$0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="border dark:border-dark-300 rounded-lg p-4">
+                                <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Group Chat</h3>
+                                <div class="h-40 overflow-y-auto mb-3 space-y-2" id="chat-messages">
+                                    <!-- Chat messages will be added here dynamically -->
+                                </div>
+                                <div class="flex">
+                                    <input type="text" placeholder="Type a message..." class="flex-1 border dark:border-dark-300 dark:bg-dark-100 rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 rounded-r-lg transform hover:scale-105 transition-transform">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modals -->
+    <div id="login-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center">
+        <div class="modal-content bg-white dark:bg-dark-200 rounded-lg shadow-xl w-full max-w-md mx-4 transform transition-all">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Log In</h3>
+                    <button id="close-login-modal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="login-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                            <input type="email" id="login-email" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="your@email.com" required>
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" id="login-password" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="••••••••" required>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input id="remember-me" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Remember me</label>
+                            </div>
+                            <a href="#" class="text-sm text-blue-500 hover:underline">Forgot password?</a>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" id="cancel-login" class="px-4 py-2 border dark:border-dark-300 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-300 transform hover:scale-105 transition-transform">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transform hover:scale-105 transition-transform">Log In</button>
+                    </div>
+                </form>
+                <div class="mt-4 text-center text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Don't have an account? </span>
+                    <button id="switch-to-register" class="text-blue-500 hover:underline">Register</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center">
+        <div class="modal-content bg-white dark:bg-dark-200 rounded-lg shadow-xl w-full max-w-md mx-4 transform transition-all">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Create Account</h3>
+                    <button id="close-register-modal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="register-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="register-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+                            <input type="text" id="register-name" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="John Doe" required>
+                        </div>
+                        <div>
+                            <label for="register-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                            <input type="email" id="register-email" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="your@email.com" required>
+                        </div>
+                        <div>
+                            <label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" id="register-password" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="••••••••" required>
+                        </div>
+                        <div>
+                            <label for="register-confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                            <input type="password" id="register-confirm-password" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" id="cancel-register" class="px-4 py-2 border dark:border-dark-300 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-300 transform hover:scale-105 transition-transform">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transform hover:scale-105 transition-transform">Register</button>
+                    </div>
+                </form>
+                <div class="mt-4 text-center text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Already have an account? </span>
+                    <button id="switch-to-login" class="text-blue-500 hover:underline">Log In</button>
                 </div>
             </div>
         </div>
@@ -333,153 +500,42 @@
 
     <!-- Create Journey Modal -->
     <div id="create-journey-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="modal-content bg-white dark:bg-dark-200 rounded-lg shadow-xl w-full max-w-md mx-4 transform transition-all">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold">Create New Journey</h3>
-                    <button id="close-create-modal" class="text-gray-500 hover:text-gray-700">
+                    <button id="close-create-journey-modal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <form id="create-journey-form">
                     <div class="space-y-4">
                         <div>
-                            <label for="journey-name" class="block text-sm font-medium text-gray-700 mb-1">Journey Name</label>
-                            <input type="text" id="journey-name" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. European Adventure">
+                            <label for="journey-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Journey Name</label>
+                            <input type="text" id="journey-name" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="My Awesome Trip" required>
+                        </div>
+                        <div>
+                            <label for="journey-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                            <textarea id="journey-description" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Tell us about your journey..." rows="3"></textarea>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label for="start-date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                                <input type="date" id="start-date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <label for="journey-start-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                                <input type="date" id="journey-start-date" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" required>
                             </div>
                             <div>
-                                <label for="end-date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                                <input type="date" id="end-date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <label for="journey-end-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                                <input type="date" id="journey-end-date" class="w-full border dark:border-dark-300 dark:bg-dark-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" required>
                             </div>
                         </div>
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <textarea id="description" rows="3" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Tell your friends about this journey..."></textarea>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="journey-is-public" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="journey-is-public" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Make this journey public</label>
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" id="cancel-create-journey" class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Create Journey</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Invite Friends Modal -->
-    <div id="invite-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Invite Friends</h3>
-                    <button id="close-invite-modal" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Search Friends</label>
-                    <div class="relative">
-                        <input type="text" placeholder="Search by name or email" class="w-full border rounded-lg px-3 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    </div>
-                </div>
-                <div class="max-h-60 overflow-y-auto mb-4 space-y-2">
-                    <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                        <div class="flex items-center">
-                            <img class="h-10 w-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/women/65.jpg" alt="Jessica">
-                            <div>
-                                <p class="font-medium">Jessica Smith</p>
-                                <p class="text-xs text-gray-500">Travel enthusiast</p>
-                            </div>
-                        </div>
-                        <button class="invite-chip px-3 py-1 rounded-full text-sm font-medium">
-                            Invite
-                        </button>
-                    </div>
-                    <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                        <div class="flex items-center">
-                            <img class="h-10 w-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/men/75.jpg" alt="David">
-                            <div>
-                                <p class="font-medium">David Wilson</p>
-                                <p class="text-xs text-gray-500">Frequent traveler</p>
-                            </div>
-                        </div>
-                        <button class="invite-chip px-3 py-1 rounded-full text-sm font-medium">
-                            Invite
-                        </button>
-                    </div>
-                    <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                        <div class="flex items-center">
-                            <img class="h-10 w-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/women/33.jpg" alt="Sophia">
-                            <div>
-                                <p class="font-medium">Sophia Brown</p>
-                                <p class="text-xs text-gray-500">Adventure seeker</p>
-                            </div>
-                        </div>
-                        <button class="invite-chip px-3 py-1 rounded-full text-sm font-medium">
-                            Invite
-                        </button>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Or invite via link</label>
-                    <div class="flex">
-                        <input type="text" value="https://journeytogether.com/invite/abc123" class="flex-1 border rounded-l-lg px-3 py-2 text-sm focus:outline-none" readonly>
-                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 rounded-r-lg">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end">
-                    <button id="send-invites-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Send Invitations</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Stop Modal -->
-    <div id="add-stop-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Add a Stop</h3>
-                    <button id="close-add-stop-modal" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <form id="add-stop-form">
-                    <div class="space-y-4">
-                        <div>
-                            <label for="stop-name" class="block text-sm font-medium text-gray-700 mb-1">Location Name</label>
-                            <input type="text" id="stop-name" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Eiffel Tower">
-                        </div>
-                        <div>
-                            <label for="stop-address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                            <input type="text" id="stop-address" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Search for an address">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="arrival-date" class="block text-sm font-medium text-gray-700 mb-1">Arrival Date</label>
-                                <input type="date" id="arrival-date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label for="departure-date" class="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
-                                <input type="date" id="departure-date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                            </div>
-                        </div>
-                        <div>
-                            <label for="stop-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                            <textarea id="stop-notes" rows="3" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Any special details about this stop..."></textarea>
-                        </div>
-                    </div>
-                    <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" id="cancel-add-stop" class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Add Stop</button>
+                        <button type="button" id="cancel-create-journey" class="px-4 py-2 border dark:border-dark-300 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-300 transform hover:scale-105 transition-transform">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transform hover:scale-105 transition-transform">Create</button>
                     </div>
                 </form>
             </div>
@@ -488,189 +544,831 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // State management
+        const state = {
+            isLoggedIn: false,
+            isGuest: false,
+            currentUser: null,
+            journeys: [],
+            publicJourneys: [],
+            currentJourney: null,
+            map: null,
+            markers: [],
+            routeLine: null,
+            friends: []
+        };
+
+        // DOM Elements
+        const elements = {
+            authButtons: document.getElementById('auth-buttons'),
+            userMenu: document.getElementById('user-menu'),
+            welcomeMessage: document.getElementById('welcome-message'),
+            journeyContent: document.getElementById('journey-content'),
+            journeysList: document.getElementById('journeys-list'),
+            publicJourneysList: document.getElementById('public-journeys-list'),
+            publicJourneysContainer: document.getElementById('public-journeys-container'),
+            companionsContainer: document.getElementById('companions-container'),
+            companionsList: document.getElementById('companions-list'),
+            itineraryList: document.getElementById('itinerary-list'),
+            budgetList: document.getElementById('budget-list'),
+            chatMessages: document.getElementById('chat-messages'),
+            journeyTitle: document.getElementById('journey-title'),
+            lastUpdated: document.getElementById('last-updated'),
+            totalBudget: document.getElementById('total-budget'),
+            privacyToggle: document.getElementById('privacy-toggle'),
+            privacyIcon: document.getElementById('privacy-icon'),
+            privacyText: document.getElementById('privacy-text'),
+            userAvatar: document.getElementById('user-avatar'),
+            guestBadge: document.getElementById('guest-badge'),
+            darkModeToggle: document.getElementById('dark-mode-toggle'),
+            loginBtn: document.getElementById('login-btn'),
+            registerBtn: document.getElementById('register-btn'),
+            welcomeLoginBtn: document.getElementById('welcome-login-btn'),
+            welcomeRegisterBtn: document.getElementById('welcome-register-btn'),
+            guestLoginBtn: document.getElementById('guest-login-btn'),
+            createJourneyBtn: document.getElementById('create-journey-btn'),
+            userMenuBtn: document.getElementById('user-menu-btn'),
+            userDropdown: document.getElementById('user-dropdown'),
+            logoutBtn: document.getElementById('logout-btn'),
+            viewPublicBtn: document.getElementById('view-public-btn'),
+            viewYourBtn: document.getElementById('view-your-btn'),
+            inviteBtn: document.getElementById('invite-btn'),
+            addStopBtn: document.getElementById('add-stop-btn'),
+            shareJourneyBtn: document.getElementById('share-journey-btn'),
+            loginModal: document.getElementById('login-modal'),
+            closeLoginModal: document.getElementById('close-login-modal'),
+            cancelLogin: document.getElementById('cancel-login'),
+            loginForm: document.getElementById('login-form'),
+            switchToRegister: document.getElementById('switch-to-register'),
+            registerModal: document.getElementById('register-modal'),
+            closeRegisterModal: document.getElementById('close-register-modal'),
+            cancelRegister: document.getElementById('cancel-register'),
+            registerForm: document.getElementById('register-form'),
+            switchToLogin: document.getElementById('switch-to-login'),
+            createJourneyModal: document.getElementById('create-journey-modal'),
+            closeCreateJourneyModal: document.getElementById('close-create-journey-modal'),
+            cancelCreateJourney: document.getElementById('cancel-create-journey'),
+            createJourneyForm: document.getElementById('create-journey-form')
+        };
+
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize map
-            const map = L.map('map').setView([48.8566, 2.3522], 5); // Paris coordinates
+            // Check if user is logged in (simulated)
+            checkAuthStatus();
             
-            // Add tile layer (OpenStreetMap)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-
-            // Add sample markers for the journey
-            const parisMarker = L.marker([48.8566, 2.3522]).addTo(map)
-                .bindPopup("<b>Paris, France</b><br>Jun 15 - Jun 18");
+            // Initialize modals and event listeners
+            initModals();
+            initEventListeners();
             
-            const brusselsMarker = L.marker([50.8503, 4.3517]).addTo(map)
-                .bindPopup("<b>Brussels, Belgium</b><br>Jun 18 - Jun 20");
+            // Load sample data
+            loadSampleData();
+
+            // Initialize dark mode toggle
+            initDarkMode();
+        });
+
+        // Initialize dark mode
+        function initDarkMode() {
+            // Check for saved theme preference or use system preference
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             
-            const amsterdamMarker = L.marker([52.3676, 4.9041]).addTo(map)
-                .bindPopup("<b>Amsterdam, Netherlands</b><br>Jun 20 - Jun 25");
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.documentElement.classList.add('dark');
+                elements.darkModeToggle.checked = true;
+            }
             
-            const berlinMarker = L.marker([52.5200, 13.4050]).addTo(map)
-                .bindPopup("<b>Berlin, Germany</b><br>Jun 25 - Jul 5");
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if (!localStorage.getItem('theme')) {
+                    if (e.matches) {
+                        document.documentElement.classList.add('dark');
+                        elements.darkModeToggle.checked = true;
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        elements.darkModeToggle.checked = false;
+                    }
+                }
+            });
 
-            // Add route line (simplified)
-            const routeCoordinates = [
-                [48.8566, 2.3522],  // Paris
-                [50.8503, 4.3517],  // Brussels
-                [52.3676, 4.9041],  // Amsterdam
-                [52.5200, 13.4050]  // Berlin
-            ];
+            // Toggle dark mode when switch is clicked
+            elements.darkModeToggle.addEventListener('change', toggleDarkMode);
+        }
+
+        // Toggle dark mode
+        function toggleDarkMode() {
+            if (elements.darkModeToggle.checked) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Check authentication status
+        function checkAuthStatus() {
+            // In a real app, this would check cookies/localStorage/API
+            const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const isGuest = localStorage.getItem('isGuest') === 'true';
             
-            const routeLine = L.polyline(routeCoordinates, {
-                color: '#3b82f6',
-                weight: 4,
-                dashArray: '10, 10'
-            }).addTo(map);
-
-            // Fit map to show all markers
-            map.fitBounds([
-                [48.8566, 2.3522],
-                [52.5200, 13.4050]
-            ]);
-
-            // Modal controls
-            const createJourneyModal = document.getElementById('create-journey-modal');
-            const inviteModal = document.getElementById('invite-modal');
-            const addStopModal = document.getElementById('add-stop-modal');
-
-            // Show create journey modal
-            document.getElementById('create-journey-btn').addEventListener('click', function() {
-                createJourneyModal.classList.remove('hidden');
-                createJourneyModal.classList.add('flex');
-            });
-
-            // Close create journey modal
-            document.getElementById('close-create-modal').addEventListener('click', function() {
-                createJourneyModal.classList.add('hidden');
-                createJourneyModal.classList.remove('flex');
-            });
-
-            document.getElementById('cancel-create-journey').addEventListener('click', function() {
-                createJourneyModal.classList.add('hidden');
-                createJourneyModal.classList.remove('flex');
-            });
-
-            // Show invite modal
-            document.getElementById('invite-btn').addEventListener('click', function() {
-                inviteModal.classList.remove('hidden');
-                inviteModal.classList.add('flex');
-            });
-
-            // Close invite modal
-            document.getElementById('close-invite-modal').addEventListener('click', function() {
-                inviteModal.classList.add('hidden');
-                inviteModal.classList.remove('flex');
-            });
-
-            // Show add stop modal
-            document.getElementById('add-stop-btn').addEventListener('click', function() {
-                addStopModal.classList.remove('hidden');
-                addStopModal.classList.add('flex');
-            });
-
-            // Close add stop modal
-            document.getElementById('close-add-stop-modal').addEventListener('click', function() {
-                addStopModal.classList.add('hidden');
-                addStopModal.classList.remove('flex');
-            });
-
-            document.getElementById('cancel-add-stop').addEventListener('click', function() {
-                addStopModal.classList.add('hidden');
-                addStopModal.classList.remove('flex');
-            });
-
-            // Form submissions
-            document.getElementById('create-journey-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // In a real app, you would save the journey here
-                const journeyName = document.getElementById('journey-name').value;
+            if (loggedIn) {
+                state.isLoggedIn = true;
+                state.isGuest = false;
+                state.currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
+                    name: 'John Doe',
+                    email: 'john@example.com',
+                    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+                };
                 
-                // Add new journey to the list
-                const journeysList = document.getElementById('journeys-list');
-                const newJourney = document.createElement('div');
-                newJourney.className = 'journey-card bg-white p-3 rounded-lg border cursor-pointer';
-                newJourney.innerHTML = `
+                updateUIForLoggedInUser();
+            } else if (isGuest) {
+                state.isLoggedIn = true;
+                state.isGuest = true;
+                state.currentUser = {
+                    name: 'Guest User',
+                    email: 'guest@journeytogether.com',
+                    avatar: 'https://i.pravatar.cc/150?u=guest'
+                };
+                
+                updateUIForGuestUser();
+            } else {
+                state.isLoggedIn = false;
+                state.isGuest = false;
+                state.currentUser = null;
+                updateUIForLoggedOutUser();
+            }
+        }
+
+        // Update UI for logged in user
+        function updateUIForLoggedInUser() {
+            elements.authButtons.classList.add('hidden');
+            elements.userMenu.classList.remove('hidden');
+            elements.welcomeMessage.classList.add('hidden');
+            elements.journeyContent.classList.remove('hidden');
+            elements.guestBadge.classList.add('hidden');
+            
+            if (state.currentUser) {
+                elements.userAvatar.src = state.currentUser.avatar;
+            }
+            
+            // Load user's journeys
+            loadUserJourneys();
+        }
+
+        // Update UI for guest user
+        function updateUIForGuestUser() {
+            elements.authButtons.classList.add('hidden');
+            elements.userMenu.classList.remove('hidden');
+            elements.welcomeMessage.classList.add('hidden');
+            elements.journeyContent.classList.remove('hidden');
+            elements.guestBadge.classList.remove('hidden');
+            
+            if (state.currentUser) {
+                elements.userAvatar.src = state.currentUser.avatar;
+            }
+            
+            // Load guest journeys
+            loadUserJourneys();
+        }
+
+        // Update UI for logged out user
+        function updateUIForLoggedOutUser() {
+            elements.authButtons.classList.remove('hidden');
+            elements.userMenu.classList.add('hidden');
+            elements.welcomeMessage.classList.remove('hidden');
+            elements.journeyContent.classList.add('hidden');
+            elements.publicJourneysContainer.classList.add('hidden');
+            elements.companionsContainer.classList.add('hidden');
+        }
+
+        // Initialize modals
+        function initModals() {
+            // Login modal
+            elements.loginBtn.addEventListener('click', () => elements.loginModal.classList.remove('hidden'));
+            elements.welcomeLoginBtn.addEventListener('click', () => elements.loginModal.classList.remove('hidden'));
+            elements.closeLoginModal.addEventListener('click', () => elements.loginModal.classList.add('hidden'));
+            elements.cancelLogin.addEventListener('click', () => elements.loginModal.classList.add('hidden'));
+            elements.switchToRegister.addEventListener('click', () => {
+                elements.loginModal.classList.add('hidden');
+                elements.registerModal.classList.remove('hidden');
+            });
+
+            // Register modal
+            elements.registerBtn.addEventListener('click', () => elements.registerModal.classList.remove('hidden'));
+            elements.welcomeRegisterBtn.addEventListener('click', () => elements.registerModal.classList.remove('hidden'));
+            elements.closeRegisterModal.addEventListener('click', () => elements.registerModal.classList.add('hidden'));
+            elements.cancelRegister.addEventListener('click', () => elements.registerModal.classList.add('hidden'));
+            elements.switchToLogin.addEventListener('click', () => {
+                elements.registerModal.classList.add('hidden');
+                elements.loginModal.classList.remove('hidden');
+            });
+
+            // Create journey modal
+            elements.createJourneyBtn.addEventListener('click', () => elements.createJourneyModal.classList.remove('hidden'));
+            elements.closeCreateJourneyModal.addEventListener('click', () => elements.createJourneyModal.classList.add('hidden'));
+            elements.cancelCreateJourney.addEventListener('click', () => elements.createJourneyModal.classList.add('hidden'));
+        }
+
+        // Initialize event listeners
+        function initEventListeners() {
+            // User dropdown
+            elements.userMenuBtn.addEventListener('click', () => {
+                elements.userDropdown.classList.toggle('hidden');
+            });
+
+            // Logout
+            elements.logoutBtn.addEventListener('click', logout);
+
+            // Guest login
+            elements.guestLoginBtn.addEventListener('click', loginAsGuest);
+
+            // View public journeys
+            elements.viewPublicBtn.addEventListener('click', () => {
+                elements.publicJourneysContainer.classList.remove('hidden');
+                elements.companionsContainer.classList.add('hidden');
+            });
+
+            // View your journeys
+            elements.viewYourBtn.addEventListener('click', () => {
+                elements.publicJourneysContainer.classList.add('hidden');
+                elements.companionsContainer.classList.remove('hidden');
+            });
+
+            // Login form submission
+            elements.loginForm.addEventListener('submit', handleLogin);
+
+            // Register form submission
+            elements.registerForm.addEventListener('submit', handleRegister);
+
+            // Create journey form submission
+            elements.createJourneyForm.addEventListener('submit', handleCreateJourney);
+
+            // Privacy toggle
+            elements.privacyToggle.addEventListener('click', toggleJourneyPrivacy);
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!elements.userMenuBtn.contains(e.target) && !elements.userDropdown.contains(e.target)) {
+                    elements.userDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        // Load sample data
+        function loadSampleData() {
+            // Sample journeys
+            state.journeys = [
+                {
+                    id: 1,
+                    name: 'European Adventure',
+                    description: 'Exploring the best of Europe',
+                    startDate: '2023-06-15',
+                    endDate: '2023-07-05',
+                    isPublic: false,
+                    stops: [
+                        { name: 'Paris, France', arrival: '2023-06-15', departure: '2023-06-18', lat: 48.8566, lng: 2.3522, notes: 'Flight from NYC' },
+                        { name: 'Brussels, Belgium', arrival: '2023-06-18', departure: '2023-06-20', lat: 50.8503, lng: 4.3517, notes: 'Train from Paris' },
+                        { name: 'Amsterdam, Netherlands', arrival: '2023-06-20', departure: '2023-06-25', lat: 52.3676, lng: 4.9041, notes: 'Train from Brussels' },
+                        { name: 'Berlin, Germany', arrival: '2023-06-25', departure: '2023-07-05', lat: 52.5200, lng: 13.4050, notes: 'Flight back to NYC' }
+                    ],
+                    companions: [
+                        { name: 'Sarah Johnson', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', status: 'confirmed' },
+                        { name: 'Mike Chen', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', status: 'confirmed' },
+                        { name: 'Emma Rodriguez', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', status: 'pending' }
+                    ],
+                    budget: {
+                        accommodation: 1200,
+                        transport: 800,
+                        food: 600,
+                        activities: 400
+                    },
+                    lastUpdated: '2 hours ago'
+                },
+                {
+                    id: 2,
+                    name: 'Asian Expedition',
+                    description: 'Discovering Asia',
+                    startDate: '2023-11-01',
+                    endDate: '2023-11-15',
+                    isPublic: true,
+                    stops: [
+                        { name: 'Tokyo, Japan', arrival: '2023-11-01', departure: '2023-11-05', lat: 35.6762, lng: 139.6503, notes: 'Flight from LAX' },
+                        { name: 'Seoul, South Korea', arrival: '2023-11-05', departure: '2023-11-09', lat: 37.5665, lng: 126.9780, notes: 'Flight from Tokyo' }
+                    ],
+                    companions: [
+                        { name: 'David Wilson', avatar: 'https://randomuser.me/api/portraits/men/75.jpg', status: 'confirmed' }
+                    ],
+                    budget: {
+                        accommodation: 800,
+                        transport: 600,
+                        food: 400,
+                        activities: 300
+                    },
+                    lastUpdated: '1 day ago'
+                }
+            ];
+
+            // Sample public journeys from other users
+            state.publicJourneys = [
+                {
+                    id: 3,
+                    name: 'South America Backpacking',
+                    description: '6 months exploring South America',
+                    startDate: '2023-09-01',
+                    endDate: '2024-03-01',
+                    owner: {
+                        name: 'Carlos Mendez',
+                        avatar: 'https://randomuser.me/api/portraits/men/22.jpg'
+                    },
+                    stops: [
+                        { name: 'Lima, Peru', arrival: '2023-09-01', departure: '2023-09-10', lat: -12.0464, lng: -77.0428 },
+                        { name: 'Cusco, Peru', arrival: '2023-09-10', departure: '2023-09-20', lat: -13.5319, lng: -71.9675 }
+                    ],
+                    companions: 2,
+                    lastUpdated: '3 days ago'
+                },
+                {
+                    id: 4,
+                    name: 'Australian Road Trip',
+                    description: 'Coastal road trip from Sydney to Brisbane',
+                    startDate: '2024-01-15',
+                    endDate: '2024-01-30',
+                    owner: {
+                        name: 'Lisa Thompson',
+                        avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
+                    },
+                    stops: [
+                        { name: 'Sydney, Australia', arrival: '2024-01-15', departure: '2024-01-18', lat: -33.8688, lng: 151.2093 },
+                        { name: 'Byron Bay, Australia', arrival: '2024-01-18', departure: '2024-01-22', lat: -28.6474, lng: 153.6020 }
+                    ],
+                    companions: 3,
+                    lastUpdated: '1 week ago'
+                }
+            ];
+
+            // Sample friends list
+            state.friends = [
+                { id: 1, name: 'Jessica Smith', email: 'jessica@example.com', avatar: 'https://randomuser.me/api/portraits/women/65.jpg', status: 'friend' },
+                { id: 2, name: 'David Wilson', email: 'david@example.com', avatar: 'https://randomuser.me/api/portraits/men/75.jpg', status: 'friend' },
+                { id: 3, name: 'Sophia Brown', email: 'sophia@example.com', avatar: 'https://randomuser.me/api/portraits/women/33.jpg', status: 'pending' }
+            ];
+
+            // If user is logged in, render their journeys
+            if (state.isLoggedIn) {
+                renderUserJourneys();
+                renderPublicJourneys();
+                renderCompanionsList();
+            }
+        }
+
+        // Load user's journeys
+        function loadUserJourneys() {
+            // In a real app, this would fetch from an API
+            renderUserJourneys();
+            
+            // Set the first journey as active by default
+            if (state.journeys.length > 0) {
+                setActiveJourney(state.journeys[0]);
+            }
+        }
+
+        // Render user's journeys
+        function renderUserJourneys() {
+            elements.journeysList.innerHTML = '';
+            
+            state.journeys.forEach(journey => {
+                const journeyCard = document.createElement('div');
+                journeyCard.className = `journey-card ${state.currentJourney?.id === journey.id ? 'active-journey bg-gray-50 dark:bg-dark-300' : 'bg-white dark:bg-dark-200'} p-3 rounded-lg border dark:border-dark-300 cursor-pointer`;
+                journeyCard.dataset.id = journey.id;
+                
+                const confirmedCompanions = journey.companions.filter(c => c.status === 'confirmed').length;
+                
+                journeyCard.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
-                            <h3 class="font-medium">${journeyName}</h3>
-                            <p class="text-sm text-gray-500">New journey</p>
+                            <h3 class="font-medium">${journey.name}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${formatJourneyDates(journey)}</p>
                         </div>
-                        <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Planning</span>
+                        <span class="${journey.isPublic ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-dark-300 text-gray-800 dark:text-gray-200'} text-xs px-2 py-1 rounded-full">
+                            ${journey.isPublic ? 'Public' : 'Private'}
+                        </span>
                     </div>
-                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                    <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
                         <i class="fas fa-users mr-1"></i>
-                        <span>1 traveler</span>
+                        <span>${confirmedCompanions + 1} traveler${confirmedCompanions + 1 !== 1 ? 's' : ''}</span>
                     </div>
                 `;
                 
-                journeysList.insertBefore(newJourney, journeysList.firstChild);
-                
-                // Close modal
-                createJourneyModal.classList.add('hidden');
-                createJourneyModal.classList.remove('flex');
-                
-                // Reset form
-                this.reset();
+                journeyCard.addEventListener('click', () => setActiveJourney(journey));
+                elements.journeysList.appendChild(journeyCard);
             });
+        }
 
-            // Invite friends functionality
-            const inviteChips = document.querySelectorAll('.invite-chip');
-            inviteChips.forEach(chip => {
-                chip.addEventListener('click', function() {
-                    this.classList.toggle('bg-blue-100');
-                    this.classList.toggle('text-blue-800');
-                    
-                    if (this.classList.contains('bg-blue-100')) {
-                        this.textContent = 'Invited';
-                    } else {
-                        this.textContent = 'Invite';
-                    }
+        // Render public journeys
+        function renderPublicJourneys() {
+            elements.publicJourneysList.innerHTML = '';
+            
+            state.publicJourneys.forEach(journey => {
+                const journeyCard = document.createElement('div');
+                journeyCard.className = `journey-card bg-white dark:bg-dark-200 p-3 rounded-lg border dark:border-dark-300 cursor-pointer`;
+                journeyCard.dataset.id = journey.id;
+                
+                journeyCard.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-medium">${journey.name}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${formatJourneyDates(journey)}</p>
+                        </div>
+                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full">
+                            Public
+                        </span>
+                    </div>
+                    <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-user mr-1"></i>
+                        <span>${journey.owner.name}</span>
+                    </div>
+                    <div class="mt-2">
+                        <button class="join-request-btn w-full bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-lg text-sm">
+                            Request to Join
+                        </button>
+                    </div>
+                `;
+                
+                journeyCard.querySelector('.join-request-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    alert(`Request to join "${journey.name}" has been sent!`);
                 });
+                
+                journeyCard.addEventListener('click', () => viewPublicJourney(journey));
+                elements.publicJourneysList.appendChild(journeyCard);
             });
+        }
 
-            // Send invites button
-            document.getElementById('send-invites-btn').addEventListener('click', function() {
-                // In a real app, you would send invites here
-                inviteModal.classList.add('hidden');
-                inviteModal.classList.remove('flex');
-                
-                // Show success message
-                alert('Invitations sent successfully!');
-            });
+        // View public journey details
+        function viewPublicJourney(journey) {
+            alert(`Viewing details for public journey: ${journey.name}`);
+        }
 
-            // Add stop functionality
-            document.getElementById('add-stop-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // In a real app, you would add the stop to the map and itinerary here
-                const stopName = document.getElementById('stop-name').value;
+        // Render companions list
+        function renderCompanionsList() {
+            elements.companionsList.innerHTML = '';
+            
+            if (!state.currentJourney) return;
+            
+            state.currentJourney.companions.forEach(companion => {
+                const companionItem = document.createElement('div');
+                companionItem.className = 'flex items-center p-2 hover:bg-gray-50 dark:hover:bg-dark-300 rounded-lg';
                 
-                // Close modal
-                addStopModal.classList.add('hidden');
-                addStopModal.classList.remove('flex');
+                companionItem.innerHTML = `
+                    <img class="h-10 w-10 rounded-full mr-3" src="${companion.avatar}" alt="${companion.name}">
+                    <div class="flex-1">
+                        <h4 class="font-medium">${companion.name}</h4>
+                        <span class="text-xs ${companion.status === 'confirmed' ? 'text-green-500' : 'text-yellow-500'}">
+                            ${companion.status === 'confirmed' ? 'Confirmed' : 'Pending'}
+                        </span>
+                    </div>
+                    ${companion.status === 'pending' ? 
+                        '<button class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>' : 
+                        '<button class="text-gray-500 hover:text-gray-700"><i class="fas fa-ellipsis-h"></i></button>'}
+                `;
                 
-                // Reset form
-                this.reset();
-                
-                // Show success message
-                alert(`"${stopName}" has been added to your journey!`);
+                elements.companionsList.appendChild(companionItem);
             });
+        }
 
-            // Make journey cards clickable
-            const journeyCards = document.querySelectorAll('.journey-card');
-            journeyCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    // Remove active class from all cards
-                    journeyCards.forEach(c => c.classList.remove('active-journey', 'bg-gray-50'));
-                    
-                    // Add active class to clicked card
-                    this.classList.add('active-journey', 'bg-gray-50');
-                    
-                    // In a real app, you would load the selected journey's data here
-                });
+        // Set active journey
+        function setActiveJourney(journey) {
+            state.currentJourney = journey;
+            
+            // Update UI
+            elements.journeyTitle.textContent = journey.name;
+            elements.lastUpdated.textContent = journey.lastUpdated;
+            
+            // Update privacy toggle
+            updatePrivacyToggle(journey.isPublic);
+            
+            // Render itinerary
+            renderItinerary(journey.stops);
+            
+            // Render budget
+            renderBudget(journey.budget);
+            
+            // Render companions
+            renderCompanionsList();
+            
+            // Initialize map if not already done
+            if (!state.map) {
+                initMap();
+            }
+            
+            // Update map with journey stops
+            updateMap(journey.stops);
+            
+            // Highlight active journey in the list
+            document.querySelectorAll('.journey-card').forEach(card => {
+                card.classList.remove('active-journey', 'bg-gray-50', 'dark:bg-dark-300');
+                if (parseInt(card.dataset.id) === journey.id) {
+                    card.classList.add('active-journey', 'bg-gray-50', 'dark:bg-dark-300');
+                }
             });
-        });
+        }
+
+        // Initialize map
+        function initMap() {
+            state.map = L.map('map').setView([51.505, -0.09], 3);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(state.map);
+        }
+
+        // Update map with journey stops
+        function updateMap(stops) {
+            // Clear existing markers and route
+            state.markers.forEach(marker => state.map.removeLayer(marker));
+            state.markers = [];
+            
+            if (state.routeLine) {
+                state.map.removeLayer(state.routeLine);
+            }
+            
+            if (stops.length === 0) return;
+            
+            // Add markers for each stop
+            const latlngs = [];
+            stops.forEach(stop => {
+                const marker = L.marker([stop.lat, stop.lng]).addTo(state.map)
+                    .bindPopup(`<b>${stop.name}</b><br>${stop.arrival} - ${stop.departure}`);
+                
+                state.markers.push(marker);
+                latlngs.push([stop.lat, stop.lng]);
+            });
+            
+            // Add a route line connecting the stops
+            state.routeLine = L.polyline(latlngs, {
+                color: '#3b82f6',
+                weight: 4,
+                dashArray: '10, 10'
+            }).addTo(state.map);
+            
+            // Fit the map to show all markers
+            state.map.fitBounds(L.latLngBounds(latlngs));
+        }
+
+        // Render itinerary
+        function renderItinerary(stops) {
+            elements.itineraryList.innerHTML = '';
+            
+            stops.forEach(stop => {
+                const stopItem = document.createElement('div');
+                stopItem.className = 'flex items-start py-2 border-b dark:border-dark-300 last:border-b-0';
+                
+                stopItem.innerHTML = `
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-500 dark:text-blue-300 mr-3">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium">${stop.name}</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">${stop.arrival} - ${stop.departure}</p>
+                        ${stop.notes ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${stop.notes}</p>` : ''}
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-2">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                `;
+                
+                elements.itineraryList.appendChild(stopItem);
+            });
+        }
+
+        // Render budget
+        function renderBudget(budget) {
+            elements.budgetList.innerHTML = '';
+            
+            let total = 0;
+            for (const [category, amount] of Object.entries(budget)) {
+                total += amount;
+                
+                const budgetItem = document.createElement('div');
+                budgetItem.className = 'flex justify-between items-center';
+                
+                budgetItem.innerHTML = `
+                    <span class="text-sm capitalize">${category}</span>
+                    <span class="font-medium">$${amount}</span>
+                `;
+                
+                elements.budgetList.appendChild(budgetItem);
+            }
+            
+            elements.totalBudget.textContent = `$${total}`;
+        }
+
+        // Format journey dates
+        function formatJourneyDates(journey) {
+            const startDate = new Date(journey.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const endDate = new Date(journey.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            return `${startDate} - ${endDate}`;
+        }
+
+        // Update privacy toggle UI
+        function updatePrivacyToggle(isPublic) {
+            if (isPublic) {
+                elements.privacyIcon.className = 'fas fa-globe mr-1';
+                elements.privacyText.textContent = 'Public';
+            } else {
+                elements.privacyIcon.className = 'fas fa-lock mr-1';
+                elements.privacyText.textContent = 'Private';
+            }
+        }
+
+        // Toggle journey privacy
+        function toggleJourneyPrivacy() {
+            if (!state.currentJourney) return;
+            
+            state.currentJourney.isPublic = !state.currentJourney.isPublic;
+            updatePrivacyToggle(state.currentJourney.isPublic);
+            
+            // Update the journey card in the list
+            const journeyCard = document.querySelector(`.journey-card[data-id="${state.currentJourney.id}"]`);
+            if (journeyCard) {
+                const badge = journeyCard.querySelector('span');
+                if (state.currentJourney.isPublic) {
+                    badge.className = 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs px-2 py-1 rounded-full';
+                    badge.textContent = 'Public';
+                } else {
+                    badge.className = 'bg-gray-100 dark:bg-dark-300 text-gray-800 dark:text-gray-200 text-xs px-2 py-1 rounded-full';
+                    badge.textContent = 'Private';
+                }
+            }
+            
+            alert(`Journey is now ${state.currentJourney.isPublic ? 'public' : 'private'}`);
+        }
+
+        // Handle login
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = elements.loginEmail.value;
+            const password = elements.loginPassword.value;
+            
+            // In a real app, this would validate and send to an API
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+            
+            // Simulate successful login
+            state.isLoggedIn = true;
+            state.isGuest = false;
+            state.currentUser = {
+                name: 'John Doe',
+                email: email,
+                avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('isGuest', 'false');
+            localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
+            
+            // Update UI
+            updateUIForLoggedInUser();
+            
+            // Close modal
+            elements.loginModal.classList.add('hidden');
+            
+            // Clear form
+            elements.loginForm.reset();
+        }
+
+        // Handle register
+        function handleRegister(e) {
+            e.preventDefault();
+            
+            const name = elements.registerName.value;
+            const email = elements.registerEmail.value;
+            const password = elements.registerPassword.value;
+            const confirmPassword = elements.registerConfirmPassword.value;
+            
+            // In a real app, this would validate and send to an API
+            if (!name || !email || !password || !confirmPassword) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            // Simulate successful registration
+            state.isLoggedIn = true;
+            state.isGuest = false;
+            state.currentUser = {
+                name: name,
+                email: email,
+                avatar: `https://i.pravatar.cc/150?u=${email}`
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('isGuest', 'false');
+            localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
+            
+            // Update UI
+            updateUIForLoggedInUser();
+            
+            // Close modal
+            elements.registerModal.classList.add('hidden');
+            
+            // Clear form
+            elements.registerForm.reset();
+        }
+
+        // Login as guest
+        function loginAsGuest() {
+            state.isLoggedIn = true;
+            state.isGuest = true;
+            state.currentUser = {
+                name: 'Guest User',
+                email: 'guest@journeytogether.com',
+                avatar: 'https://i.pravatar.cc/150?u=guest'
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('isGuest', 'true');
+            localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
+            
+            // Update UI
+            updateUIForGuestUser();
+        }
+
+        // Handle create journey
+        function handleCreateJourney(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('journey-name').value;
+            const description = document.getElementById('journey-description').value;
+            const startDate = document.getElementById('journey-start-date').value;
+            const endDate = document.getElementById('journey-end-date').value;
+            const isPublic = document.getElementById('journey-is-public').checked;
+            
+            if (!name || !startDate || !endDate) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Create new journey
+            const newJourney = {
+                id: state.journeys.length + 1,
+                name: name,
+                description: description,
+                startDate: startDate,
+                endDate: endDate,
+                isPublic: isPublic,
+                stops: [],
+                companions: [],
+                budget: {
+                    accommodation: 0,
+                    transport: 0,
+                    food: 0,
+                    activities: 0
+                },
+                lastUpdated: 'Just now'
+            };
+            
+            // Add to journeys
+            state.journeys.push(newJourney);
+            
+            // Set as active journey
+            setActiveJourney(newJourney);
+            
+            // Re-render journey list
+            renderUserJourneys();
+            
+            // Close modal
+            elements.createJourneyModal.classList.add('hidden');
+            
+            // Clear form
+            elements.createJourneyForm.reset();
+        }
+
+        // Logout
+        function logout() {
+            state.isLoggedIn = false;
+            state.isGuest = false;
+            state.currentUser = null;
+            
+            // Clear localStorage
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('isGuest');
+            localStorage.removeItem('currentUser');
+            
+            // Update UI
+            updateUIForLoggedOutUser();
+        }
     </script>
-<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - <a href="https://enzostvs-deepsite.hf.space?remix=ttrld/bio" style="color: #fff;text-decoration: underline;" target="_blank" >🧬 Remix</a></p></body>
+</body>
 </html>
