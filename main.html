@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey Together | Plan Group Travel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            color: #1e293b;
+        }
+
+        #map {
+            height: 400px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .journey-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .journey-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+        }
+
+        .active-journey {
+            border-left-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        .invite-chip {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            transition: all 0.2s;
+        }
+
+        .invite-chip:hover {
+            background-color: #bae6fd;
+        }
+
+        .marker-cluster {
+            background-color: rgba(59, 130, 246, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .route-line {
+            stroke: #3b82f6;
+            stroke-width: 4;
+            stroke-dasharray: 10, 10;
+            fill: none;
+        }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-route text-blue-500 text-2xl mr-2"></i>
+                        <span class="text-xl font-semibold text-gray-900">Journey Together</span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <button id="create-journey-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> New Journey
+                    </button>
+                    <div class="ml-4 relative">
+                        <button id="user-menu-btn" class="flex items-center text-sm rounded-full focus:outline-none">
+                            <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User profile">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Sidebar -->
+            <div class="w-full md:w-1/3 lg:w-1/4 space-y-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h2 class="text-lg font-semibold mb-4">Your Journeys</h2>
+                    <div class="space-y-3" id="journeys-list">
+                        <!-- Journey cards will be added here dynamically -->
+                        <div class="journey-card active-journey bg-white p-3 rounded-lg border cursor-pointer">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">European Adventure</h3>
+                                    <p class="text-sm text-gray-500">Jun 15 - Jul 5, 2023</p>
+                                </div>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Active</span>
+                            </div>
+                            <div class="mt-2 flex items-center text-sm text-gray-500">
+                                <i class="fas fa-users mr-1"></i>
+                                <span>4 travelers</span>
+                            </div>
+                        </div>
+                        <div class="journey-card bg-white p-3 rounded-lg border cursor-pointer">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">Asian Expedition</h3>
+                                    <p class="text-sm text-gray-500">Planned for Nov 2023</p>
+                                </div>
+                                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Planning</span>
+                            </div>
+                            <div class="mt-2 flex items-center text-sm text-gray-500">
+                                <i class="fas fa-users mr-1"></i>
+                                <span>2 travelers</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h2 class="text-lg font-semibold mb-4">Travel Companions</h2>
+                    <div class="space-y-3" id="companions-list">
+                        <!-- Companion cards will be added here dynamically -->
+                        <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Sarah Johnson</p>
+                                <p class="text-xs text-gray-500">Confirmed</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Mike">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Mike Chen</p>
+                                <p class="text-xs text-gray-500">Confirmed</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                            <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Emma">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Emma Rodriguez</p>
+                                <p class="text-xs text-gray-500">Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="invite-btn" class="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user-plus mr-2"></i> Invite Friends
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="w-full md:w-2/3 lg:w-3/4 space-y-6">
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">European Adventure</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 p-2 rounded-lg">
+                                <i class="fas fa-route"></i>
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 p-2 rounded-lg">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 p-2 rounded-lg">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Map Container -->
+                    <div id="map" class="mb-4"></div>
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <button id="add-stop-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center text-sm">
+                                <i class="fas fa-plus mr-1"></i> Add Stop
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-lg flex items-center text-sm">
+                                <i class="fas fa-share-alt mr-1"></i> Share
+                            </button>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            Last updated: 2 hours ago
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h2 class="text-lg font-semibold mb-4">Journey Details</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="border rounded-lg p-4">
+                            <h3 class="font-medium text-gray-700 mb-2">Itinerary</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 text-blue-800 rounded-full h-6 w-6 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
+                                        <i class="fas fa-plane-departure text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Paris, France</p>
+                                        <p class="text-xs text-gray-500">Jun 15 - Jun 18</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 text-blue-800 rounded-full h-6 w-6 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
+                                        <i class="fas fa-train text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Brussels, Belgium</p>
+                                        <p class="text-xs text-gray-500">Jun 18 - Jun 20</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 text-blue-800 rounded-full h-6 w-6 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
+                                        <i class="fas fa-bus text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Amsterdam, Netherlands</p>
+                                        <p class="text-xs text-gray-500">Jun 20 - Jun 25</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 text-blue-800 rounded-full h-6 w-6 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
+                                        <i class="fas fa-ship text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Berlin, Germany</p>
+                                        <p class="text-xs text-gray-500">Jun 25 - Jul 5</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border rounded-lg p-4">
+                            <h3 class="font-medium text-gray-700 mb-2">Budget</h3>
+                            <div class="space-y-2">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Accommodation</span>
+                                        <span>$1,200</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="bg-blue-600 h-1.5 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Transport</span>
+                                        <span>$800</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="bg-green-500 h-1.5 rounded-full" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Food</span>
+                                        <span>$600</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 30%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-2 border-t">
+                                <div class="flex justify-between font-medium">
+                                    <span>Total</span>
+                                    <span>$2,600</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border rounded-lg p-4">
+                            <h3 class="font-medium text-gray-700 mb-2">Group Chat</h3>
+                            <div class="h-40 overflow-y-auto mb-3 space-y-2">
+                                <div class="flex">
+                                    <img class="h-6 w-6 rounded-full mr-2" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah">
+                                    <div class="bg-gray-100 rounded-lg p-2 text-sm max-w-xs">
+                                        <p class="font-medium">Sarah</p>
+                                        <p>Has everyone booked their flights yet?</p>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end">
+                                    <div class="bg-blue-100 rounded-lg p-2 text-sm max-w-xs">
+                                        <p>Yes, I booked mine yesterday</p>
+                                    </div>
+                                </div>
+                                <div class="flex">
+                                    <img class="h-6 w-6 rounded-full mr-2" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Mike">
+                                    <div class="bg-gray-100 rounded-lg p-2 text-sm max-w-xs">
+                                        <p class="font-medium">Mike</p>
+                                        <p>I found a great hostel in Amsterdam</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex">
+                                <input type="text" placeholder="Type a message..." class="flex-1 border rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 rounded-r-lg">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Journey Modal -->
+    <div id="create-journey-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Create New Journey</h3>
+                    <button id="close-create-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="create-journey-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="journey-name" class="block text-sm font-medium text-gray-700 mb-1">Journey Name</label>
+                            <input type="text" id="journey-name" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. European Adventure">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="start-date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                <input type="date" id="start-date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="end-date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                <input type="date" id="end-date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="description" rows="3" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Tell your friends about this journey..."></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" id="cancel-create-journey" class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Create Journey</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Friends Modal -->
+    <div id="invite-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Invite Friends</h3>
+                    <button id="close-invite-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Search Friends</label>
+                    <div class="relative">
+                        <input type="text" placeholder="Search by name or email" class="w-full border rounded-lg px-3 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="max-h-60 overflow-y-auto mb-4 space-y-2">
+                    <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <img class="h-10 w-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/women/65.jpg" alt="Jessica">
+                            <div>
+                                <p class="font-medium">Jessica Smith</p>
+                                <p class="text-xs text-gray-500">Travel enthusiast</p>
+                            </div>
+                        </div>
+                        <button class="invite-chip px-3 py-1 rounded-full text-sm font-medium">
+                            Invite
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <img class="h-10 w-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/men/75.jpg" alt="David">
+                            <div>
+                                <p class="font-medium">David Wilson</p>
+                                <p class="text-xs text-gray-500">Frequent traveler</p>
+                            </div>
+                        </div>
+                        <button class="invite-chip px-3 py-1 rounded-full text-sm font-medium">
+                            Invite
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <img class="h-10 w-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/women/33.jpg" alt="Sophia">
+                            <div>
+                                <p class="font-medium">Sophia Brown</p>
+                                <p class="text-xs text-gray-500">Adventure seeker</p>
+                            </div>
+                        </div>
+                        <button class="invite-chip px-3 py-1 rounded-full text-sm font-medium">
+                            Invite
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Or invite via link</label>
+                    <div class="flex">
+                        <input type="text" value="https://journeytogether.com/invite/abc123" class="flex-1 border rounded-l-lg px-3 py-2 text-sm focus:outline-none" readonly>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 rounded-r-lg">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button id="send-invites-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Send Invitations</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Stop Modal -->
+    <div id="add-stop-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Add a Stop</h3>
+                    <button id="close-add-stop-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="add-stop-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="stop-name" class="block text-sm font-medium text-gray-700 mb-1">Location Name</label>
+                            <input type="text" id="stop-name" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Eiffel Tower">
+                        </div>
+                        <div>
+                            <label for="stop-address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <input type="text" id="stop-address" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Search for an address">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="arrival-date" class="block text-sm font-medium text-gray-700 mb-1">Arrival Date</label>
+                                <input type="date" id="arrival-date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="departure-date" class="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
+                                <input type="date" id="departure-date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="stop-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                            <textarea id="stop-notes" rows="3" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Any special details about this stop..."></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" id="cancel-add-stop" class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Add Stop</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize map
+            const map = L.map('map').setView([48.8566, 2.3522], 5); // Paris coordinates
+            
+            // Add tile layer (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Add sample markers for the journey
+            const parisMarker = L.marker([48.8566, 2.3522]).addTo(map)
+                .bindPopup("<b>Paris, France</b><br>Jun 15 - Jun 18");
+            
+            const brusselsMarker = L.marker([50.8503, 4.3517]).addTo(map)
+                .bindPopup("<b>Brussels, Belgium</b><br>Jun 18 - Jun 20");
+            
+            const amsterdamMarker = L.marker([52.3676, 4.9041]).addTo(map)
+                .bindPopup("<b>Amsterdam, Netherlands</b><br>Jun 20 - Jun 25");
+            
+            const berlinMarker = L.marker([52.5200, 13.4050]).addTo(map)
+                .bindPopup("<b>Berlin, Germany</b><br>Jun 25 - Jul 5");
+
+            // Add route line (simplified)
+            const routeCoordinates = [
+                [48.8566, 2.3522],  // Paris
+                [50.8503, 4.3517],  // Brussels
+                [52.3676, 4.9041],  // Amsterdam
+                [52.5200, 13.4050]  // Berlin
+            ];
+            
+            const routeLine = L.polyline(routeCoordinates, {
+                color: '#3b82f6',
+                weight: 4,
+                dashArray: '10, 10'
+            }).addTo(map);
+
+            // Fit map to show all markers
+            map.fitBounds([
+                [48.8566, 2.3522],
+                [52.5200, 13.4050]
+            ]);
+
+            // Modal controls
+            const createJourneyModal = document.getElementById('create-journey-modal');
+            const inviteModal = document.getElementById('invite-modal');
+            const addStopModal = document.getElementById('add-stop-modal');
+
+            // Show create journey modal
+            document.getElementById('create-journey-btn').addEventListener('click', function() {
+                createJourneyModal.classList.remove('hidden');
+                createJourneyModal.classList.add('flex');
+            });
+
+            // Close create journey modal
+            document.getElementById('close-create-modal').addEventListener('click', function() {
+                createJourneyModal.classList.add('hidden');
+                createJourneyModal.classList.remove('flex');
+            });
+
+            document.getElementById('cancel-create-journey').addEventListener('click', function() {
+                createJourneyModal.classList.add('hidden');
+                createJourneyModal.classList.remove('flex');
+            });
+
+            // Show invite modal
+            document.getElementById('invite-btn').addEventListener('click', function() {
+                inviteModal.classList.remove('hidden');
+                inviteModal.classList.add('flex');
+            });
+
+            // Close invite modal
+            document.getElementById('close-invite-modal').addEventListener('click', function() {
+                inviteModal.classList.add('hidden');
+                inviteModal.classList.remove('flex');
+            });
+
+            // Show add stop modal
+            document.getElementById('add-stop-btn').addEventListener('click', function() {
+                addStopModal.classList.remove('hidden');
+                addStopModal.classList.add('flex');
+            });
+
+            // Close add stop modal
+            document.getElementById('close-add-stop-modal').addEventListener('click', function() {
+                addStopModal.classList.add('hidden');
+                addStopModal.classList.remove('flex');
+            });
+
+            document.getElementById('cancel-add-stop').addEventListener('click', function() {
+                addStopModal.classList.add('hidden');
+                addStopModal.classList.remove('flex');
+            });
+
+            // Form submissions
+            document.getElementById('create-journey-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // In a real app, you would save the journey here
+                const journeyName = document.getElementById('journey-name').value;
+                
+                // Add new journey to the list
+                const journeysList = document.getElementById('journeys-list');
+                const newJourney = document.createElement('div');
+                newJourney.className = 'journey-card bg-white p-3 rounded-lg border cursor-pointer';
+                newJourney.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-medium">${journeyName}</h3>
+                            <p class="text-sm text-gray-500">New journey</p>
+                        </div>
+                        <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Planning</span>
+                    </div>
+                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                        <i class="fas fa-users mr-1"></i>
+                        <span>1 traveler</span>
+                    </div>
+                `;
+                
+                journeysList.insertBefore(newJourney, journeysList.firstChild);
+                
+                // Close modal
+                createJourneyModal.classList.add('hidden');
+                createJourneyModal.classList.remove('flex');
+                
+                // Reset form
+                this.reset();
+            });
+
+            // Invite friends functionality
+            const inviteChips = document.querySelectorAll('.invite-chip');
+            inviteChips.forEach(chip => {
+                chip.addEventListener('click', function() {
+                    this.classList.toggle('bg-blue-100');
+                    this.classList.toggle('text-blue-800');
+                    
+                    if (this.classList.contains('bg-blue-100')) {
+                        this.textContent = 'Invited';
+                    } else {
+                        this.textContent = 'Invite';
+                    }
+                });
+            });
+
+            // Send invites button
+            document.getElementById('send-invites-btn').addEventListener('click', function() {
+                // In a real app, you would send invites here
+                inviteModal.classList.add('hidden');
+                inviteModal.classList.remove('flex');
+                
+                // Show success message
+                alert('Invitations sent successfully!');
+            });
+
+            // Add stop functionality
+            document.getElementById('add-stop-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // In a real app, you would add the stop to the map and itinerary here
+                const stopName = document.getElementById('stop-name').value;
+                
+                // Close modal
+                addStopModal.classList.add('hidden');
+                addStopModal.classList.remove('flex');
+                
+                // Reset form
+                this.reset();
+                
+                // Show success message
+                alert(`"${stopName}" has been added to your journey!`);
+            });
+
+            // Make journey cards clickable
+            const journeyCards = document.querySelectorAll('.journey-card');
+            journeyCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove active class from all cards
+                    journeyCards.forEach(c => c.classList.remove('active-journey', 'bg-gray-50'));
+                    
+                    // Add active class to clicked card
+                    this.classList.add('active-journey', 'bg-gray-50');
+                    
+                    // In a real app, you would load the selected journey's data here
+                });
+            });
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - <a href="https://enzostvs-deepsite.hf.space?remix=ttrld/bio" style="color: #fff;text-decoration: underline;" target="_blank" >🧬 Remix</a></p></body>
+</html>
