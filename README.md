@@ -1,2 +1,2 @@
 # Travel-with-friends
-A cool website for firends
+A cool website for traveling with friends.
